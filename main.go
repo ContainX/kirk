@@ -9,6 +9,10 @@ import (
 	"regexp"
 )
 
+var subscribedChannels []string
+var subscribedProjects []string
+var jiraBaseUrl string = "https://jira.auction.com"
+
 func main() {
 	config := map[string]string{
 		"SLACK_BOT_ACCESS_TOKEN": "xoxb-196008087415-z3m59xI3h3DMMZtLovYsZY40",
@@ -22,9 +26,8 @@ func main() {
 
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
-	const connectionChannel string = "C5QF2Q4NL"
-	const jiraBaseUrl string = "https://jira.auction.com"
-	projects := []string{"VOLT", "XOEY"}
+	subscribedChannels = append(subscribedChannels, "C5QF2Q4NL")
+	subscribedProjects = append(subscribedProjects, "VOLT", "XOEY")
 
 	for msg := range rtm.IncomingEvents {
 		fmt.Println("Event Received")
@@ -34,17 +37,16 @@ func main() {
 		//	fmt.Println("Kirk is connected to Slack")
 		//	fmt.Println("Connection counter:", event.ConnectionCount)
 		case *slack.MessageEvent:
-			text := event.Text
-
-			issueIdRegex := "(" + strings.Join(projects, "|") + `)-\d+`
+			fmt.Println(event)
+			issueIdRegex := "(" + strings.Join(subscribedProjects, "|") + `)-\d+`
 			issueIdRe := regexp.MustCompile(issueIdRegex)
-			issueIds := issueIdRe.FindAllString(text, -1)
+			issueIds := issueIdRe.FindAllString(event.Text, -1)
 
 			// Message contains issueIds
 			if issueIds != nil {
 				idLinkPrefix := "/browse/"
 				issueIdAlreadyLinksRe := regexp.MustCompile(idLinkPrefix + issueIdRegex)
-				issueIdsAlreadyLinks := issueIdAlreadyLinksRe.FindAllString(text, -1)
+				issueIdsAlreadyLinks := issueIdAlreadyLinksRe.FindAllString(event.Text, -1)
 				newText := ""
 				for _, issueId := range issueIds {
 					// Detect if captured issueId is already wrapped in a link
@@ -66,7 +68,7 @@ func main() {
 					rtm.SendMessage(
 						rtm.NewOutgoingMessage(
 							"Here are. some. links to JIRA:\n" + newText,
-							connectionChannel,
+							event.Channel,
 						),
 					)
 				}
