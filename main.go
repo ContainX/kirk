@@ -37,16 +37,40 @@ func main() {
 			text := event.Text
 
 			issueIdRegex := "(" + strings.Join(projects, "|") + `)-\d+`
-			re := regexp.MustCompile(issueIdRegex)
-			issueIds := re.FindAllString(text, -1)
+			issueIdRe := regexp.MustCompile(issueIdRegex)
+			issueIds := issueIdRe.FindAllString(text, -1)
 
+			// Message contains issueIds
 			if issueIds != nil {
-				newText := "Here are. some. links to JIRA:\n"
+				idLinkPrefix := "/browse/"
+				issueIdAlreadyLinksRe := regexp.MustCompile(idLinkPrefix + issueIdRegex)
+				issueIdsAlreadyLinks := issueIdAlreadyLinksRe.FindAllString(text, -1)
+				newText := ""
 				for _, issueId := range issueIds {
+					// Detect if captured issueId is already wrapped in a link
+					// Must do it this way because golang doesn't support negative lookahead in regex
+					issueIdIsLink := false
+					for _, linkFragment := range issueIdsAlreadyLinks {
+						if idLinkPrefix + issueId == linkFragment {
+							issueIdIsLink = true
+							continue
+						}
+					}
+					if issueIdIsLink == true {
+						continue
+					}
 					newText += jiraBaseUrl + "/browse/" + issueId + "\n"
 				}
 
-				rtm.SendMessage(rtm.NewOutgoingMessage(newText, connectionChannel))
+				if newText != "" {
+					rtm.SendMessage(
+						rtm.NewOutgoingMessage(
+							"Here are. some. links to JIRA:\n" + newText,
+							connectionChannel,
+						),
+					)
+				}
+
 			}
 		}
 	}
