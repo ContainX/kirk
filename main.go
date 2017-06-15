@@ -9,9 +9,70 @@ import (
 	"regexp"
 )
 
-var subscribedChannels []string
 var subscribedProjects []string
 var jiraBaseUrl string = "https://jira.auction.com"
+
+func handleCommand (commandText string) string {
+	userCommand := strings.Split(commandText, " ")
+	
+	jiraBaseUrlConfigKey := "jira-base-url"
+	projectsConfigKey := "jira-projects"
+	if len(userCommand) >= 2 {
+		switch userCommand[0] {
+		case "config":
+			switch userCommand[1] {
+			case "get":
+				if len(userCommand) == 2 {
+					return jiraBaseUrlConfigKey + ": " + jiraBaseUrl + "\n" + projectsConfigKey + ": " + strings.Join(subscribedProjects, ", ")
+				} else if len(userCommand) >= 3 {
+					switch userCommand[2] {
+					case jiraBaseUrlConfigKey:
+						return "The JIRA. Base url is: " +  jiraBaseUrl
+					case projectsConfigKey:
+						return "The follow. projects. are tracked: " + strings.Join(subscribedProjects, ", ")
+					}
+				}
+			case "set":
+				if len(userCommand) >= 4 {
+					switch userCommand[2] {
+					case jiraBaseUrlConfigKey:
+						// Slack adds < and > when URLs are detected
+						jiraBaseUrl = strings.Trim(userCommand[3], "<>")
+						return "I've changed. Your JIRA Base. URL. to " + jiraBaseUrl
+					}
+				}
+			case "add":
+				if len(userCommand) >= 4 {
+					switch userCommand[2] {
+					case projectsConfigKey:
+						for _, project := range subscribedProjects {
+							if project == userCommand[3] {
+								return project + " is. already tracked."
+							}
+						}
+						subscribedProjects = append(subscribedProjects, userCommand[3])
+						return userCommand[3] + " project. added. to tracked projects"
+					}
+				}
+			case "remove":
+				if len(userCommand) >= 4 {
+					switch userCommand[2] {
+					case projectsConfigKey:
+						for index, project := range subscribedProjects {
+							if project == userCommand[3] {
+								subscribedProjects = append(subscribedProjects[:index], subscribedProjects[index+1:]...)
+								return userCommand[3] + " project. no longer. tracked"
+								break
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return "I don't know. how to handle the. command. " + commandText
+}
 
 func main() {
 	config := map[string]string{
@@ -26,7 +87,6 @@ func main() {
 
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
-	subscribedChannels = append(subscribedChannels, "C5QF2Q4NL")
 	subscribedProjects = append(subscribedProjects, "VOLT", "XOEY")
 
 	for msg := range rtm.IncomingEvents {
@@ -37,42 +97,65 @@ func main() {
 		//	fmt.Println("Kirk is connected to Slack")
 		//	fmt.Println("Connection counter:", event.ConnectionCount)
 		case *slack.MessageEvent:
-			fmt.Println(event)
-			issueIdRegex := "(" + strings.Join(subscribedProjects, "|") + `)-\d+`
-			issueIdRe := regexp.MustCompile(issueIdRegex)
-			issueIds := issueIdRe.FindAllString(event.Text, -1)
-
-			// Message contains issueIds
-			if issueIds != nil {
-				idLinkPrefix := "/browse/"
-				issueIdAlreadyLinksRe := regexp.MustCompile(idLinkPrefix + issueIdRegex)
-				issueIdsAlreadyLinks := issueIdAlreadyLinksRe.FindAllString(event.Text, -1)
-				newText := ""
-				for _, issueId := range issueIds {
-					// Detect if captured issueId is already wrapped in a link
-					// Must do it this way because golang doesn't support negative lookahead in regex
-					issueIdIsLink := false
-					for _, linkFragment := range issueIdsAlreadyLinks {
-						if idLinkPrefix + issueId == linkFragment {
-							issueIdIsLink = true
-							continue
+			if strings.HasPrefix(event.Channel, "D") == true {
+				imDetails, err := rtm.GetIMChannels()
+				if err != nil {
+					logger.Fatal("Could not get IM channels")
+				} else {
+					messageIsIm := false
+					for _, imChannel := range imDetails {
+						if imChannel.ID == event.Channel {
+							messageIsIm = true
+							break
 						}
 					}
-					if issueIdIsLink == true {
-						continue
+
+					if messageIsIm == true {
+						// Direct message to bot
+						responseText := handleCommand(event.Text)
+						rtm.SendMessage(
+							rtm.NewOutgoingMessage(
+								responseText,
+								event.Channel,
+							),
+						)
 					}
-					newText += jiraBaseUrl + "/browse/" + issueId + "\n"
 				}
+			} else {
+				// Message is not special, run through default formatter
+				issueIdRegex := "(" + strings.Join(subscribedProjects, "|") + `)-\d+`
+				issueIdRe := regexp.MustCompile(issueIdRegex)
+				issueIds := issueIdRe.FindAllString(event.Text, -1)
+				if issueIds != nil {
+					idLinkPrefix := "/browse/"
+					issueIdAlreadyLinksRe := regexp.MustCompile(idLinkPrefix + issueIdRegex)
+					issueIdsAlreadyLinks := issueIdAlreadyLinksRe.FindAllString(event.Text, -1)
+					newText := ""
+					for _, issueId := range issueIds {
+						// Detect if captured issueId is already wrapped in a link
+						// Must do it this way because golang doesn't support negative lookahead in regex
+						issueIdIsLink := false
+						for _, linkFragment := range issueIdsAlreadyLinks {
+							if idLinkPrefix+issueId == linkFragment {
+								issueIdIsLink = true
+								continue
+							}
+						}
+						if issueIdIsLink == true {
+							continue
+						}
+						newText += jiraBaseUrl + "/browse/" + issueId + "\n"
+					}
 
-				if newText != "" {
-					rtm.SendMessage(
-						rtm.NewOutgoingMessage(
-							"Here are. some. links to JIRA:\n" + newText,
-							event.Channel,
-						),
-					)
+					if newText != "" {
+						rtm.SendMessage(
+							rtm.NewOutgoingMessage(
+								"Here are. some. links to JIRA:\n"+newText,
+								event.Channel,
+							),
+						)
+					}
 				}
-
 			}
 		}
 	}
