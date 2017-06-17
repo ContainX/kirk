@@ -9,10 +9,13 @@ import (
 	"regexp"
 )
 
-var subscribedProjects []string
-var jiraBaseUrl string = "https://jira.auction.com"
+type TeamConfigStruct struct {
+	subscribedProjects []string
+	jiraBaseUrl string
+}
+var configByTeamId = make(map[string]TeamConfigStruct)
 
-func handleCommand (commandText string) string {
+func handleCommand (commandText string, teamConfig *TeamConfigStruct) string {
 	userCommand := strings.Split(commandText, " ")
 	
 	jiraBaseUrlConfigKey := "jira-base-url"
@@ -23,13 +26,13 @@ func handleCommand (commandText string) string {
 			switch userCommand[1] {
 			case "get":
 				if len(userCommand) == 2 {
-					return jiraBaseUrlConfigKey + ": " + jiraBaseUrl + "\n" + projectsConfigKey + ": " + strings.Join(subscribedProjects, ", ")
+					return jiraBaseUrlConfigKey + ": " + teamConfig.jiraBaseUrl + "\n" + projectsConfigKey + ": " + strings.Join(teamConfig.subscribedProjects, ", ")
 				} else if len(userCommand) >= 3 {
 					switch userCommand[2] {
 					case jiraBaseUrlConfigKey:
-						return "The JIRA. Base url is: " +  jiraBaseUrl
+						return "The JIRA. Base url is: " +  teamConfig.jiraBaseUrl
 					case projectsConfigKey:
-						return "The follow. projects. are tracked: " + strings.Join(subscribedProjects, ", ")
+						return "The follow. projects. are tracked: " + strings.Join(teamConfig.subscribedProjects, ", ")
 					}
 				}
 			case "set":
@@ -37,20 +40,20 @@ func handleCommand (commandText string) string {
 					switch userCommand[2] {
 					case jiraBaseUrlConfigKey:
 						// Slack adds < and > when URLs are detected
-						jiraBaseUrl = strings.Trim(userCommand[3], "<>")
-						return "I've changed. Your JIRA Base. URL. to " + jiraBaseUrl
+						teamConfig.jiraBaseUrl = strings.Trim(userCommand[3], "<>")
+						return "I've changed. Your JIRA Base. URL. to " + teamConfig.jiraBaseUrl
 					}
 				}
 			case "add":
 				if len(userCommand) >= 4 {
 					switch userCommand[2] {
 					case projectsConfigKey:
-						for _, project := range subscribedProjects {
+						for _, project := range teamConfig.subscribedProjects {
 							if project == userCommand[3] {
 								return project + " is. already tracked."
 							}
 						}
-						subscribedProjects = append(subscribedProjects, userCommand[3])
+						teamConfig.subscribedProjects = append(teamConfig.subscribedProjects, userCommand[3])
 						return userCommand[3] + " project. added. to tracked projects"
 					}
 				}
@@ -58,9 +61,9 @@ func handleCommand (commandText string) string {
 				if len(userCommand) >= 4 {
 					switch userCommand[2] {
 					case projectsConfigKey:
-						for index, project := range subscribedProjects {
+						for index, project := range teamConfig.subscribedProjects {
 							if project == userCommand[3] {
-								subscribedProjects = append(subscribedProjects[:index], subscribedProjects[index+1:]...)
+								teamConfig.subscribedProjects = append(teamConfig.subscribedProjects[:index], teamConfig.subscribedProjects[index+1:]...)
 								return userCommand[3] + " project. no longer. tracked"
 								break
 							}
@@ -75,11 +78,11 @@ func handleCommand (commandText string) string {
 }
 
 func main() {
-	config := map[string]string{
+	botConfig := map[string]string{
 		"SLACK_BOT_ACCESS_TOKEN": "xoxb-196008087415-z3m59xI3h3DMMZtLovYsZY40",
 	}
 
-	api := slack.New(config["SLACK_BOT_ACCESS_TOKEN"])
+	api := slack.New(botConfig["SLACK_BOT_ACCESS_TOKEN"])
 	logger := log.New(os.Stdout, "slack-bot:", log.Lshortfile|log.LstdFlags)
 
 	slack.SetLogger(logger)
@@ -87,7 +90,18 @@ func main() {
 
 	rtm := api.NewRTM()
 	go rtm.ManageConnection()
-	subscribedProjects = append(subscribedProjects, "VOLT", "XOEY")
+
+	teamInfo, teamInfoErr := api.GetTeamInfo()
+	if teamInfoErr != nil {
+		panic("Could not get team info")
+	} else if _, ok := configByTeamId[teamInfo.ID]; !ok {
+		configByTeamId[teamInfo.ID] = TeamConfigStruct{
+			subscribedProjects: []string{"XOEY", "VOLT"},
+			jiraBaseUrl: "https://jira.auction.com",
+		}
+	}
+
+	teamConfig := configByTeamId[teamInfo.ID]
 
 	for msg := range rtm.IncomingEvents {
 		fmt.Println("Event Received")
@@ -112,7 +126,7 @@ func main() {
 
 					if messageIsIm == true {
 						// Direct message to bot
-						responseText := handleCommand(event.Text)
+						responseText := handleCommand(event.Text, &teamConfig)
 						rtm.SendMessage(
 							rtm.NewOutgoingMessage(
 								responseText,
@@ -123,7 +137,7 @@ func main() {
 				}
 			} else {
 				// Message is not special, run through default formatter
-				issueIdRegex := "(" + strings.Join(subscribedProjects, "|") + `)-\d+`
+				issueIdRegex := "(" + strings.Join(teamConfig.subscribedProjects, "|") + `)-\d+`
 				issueIdRe := regexp.MustCompile(issueIdRegex)
 				issueIds := issueIdRe.FindAllString(event.Text, -1)
 				if issueIds != nil {
@@ -144,7 +158,7 @@ func main() {
 						if issueIdIsLink == true {
 							continue
 						}
-						newText += jiraBaseUrl + "/browse/" + issueId + "\n"
+						newText += teamConfig.jiraBaseUrl + "/browse/" + issueId + "\n"
 					}
 
 					if newText != "" {
