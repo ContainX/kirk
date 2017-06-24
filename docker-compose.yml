@@ -3,12 +3,17 @@ services:
   kirk:
     build:
       context: .
+    env_file:
+      - ./.env
     environment:
       APP_ENV: development
-    networks:
-      - my-net
     volumes:
       - ./:/go/src/github.com/jeremyroberts0/kirk
-networks:
-  my-net:
-    driver: bridge
+    links:
+      - mongo
+  mongo:
+    image: mongo
+    volumes:
+      - ./~/data/mongodb/db:/data/db
+    ports:
+      - "27017:27017"

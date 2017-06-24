@@ -9,12 +9,57 @@ import (
 	"fmt"
 	"strings"
 	"regexp"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
+
+type Person struct {
+	Name string
+	Phone string
+}
+
+
 func main() {
-	botConfig := map[string]string{
-		"SLACK_BOT_ACCESS_TOKEN": "xoxb-196008087415-9cU7HKAsXaspPVULKpUunUQz",
+	mongoSession, mongoErr := mgo.Dial("mongodb://mongo:27017")
+	db := mongoSession.DB("kirk")
+	//defer mongoSession.Close()
+
+	if mongoErr != nil {
+		fmt.Println("Error connecting to mongo", mongoErr)
+		panic(mongoErr)
 	}
+
+	// Mongo Testing
+	testCollection := db.C("test")
+	err := testCollection.Insert(&Person{"Jeremy", "408-555-4444"})
+	if err != nil {
+		panic(err)
+	}
+
+	result := Person{}
+	query := testCollection.Find(bson.M{"name": "Jeremy"})
+	err = query.One(&result)
+	if err != nil {
+		panic(err)
+	}
+	count, err := query.Count()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(count, result)
+
+
+	// End Mongo Testing
+
+
+
+	botConfig := map[string]string{
+		"SLACK_BOT_ACCESS_TOKEN": os.Getenv("SLACK_BOT_ACCESS_TOKEN"),
+	}
+
+	fmt.Println(botConfig)
 
 	api := slack.New(botConfig["SLACK_BOT_ACCESS_TOKEN"])
 	logger := log.New(os.Stdout, "slack-bot:", log.Lshortfile|log.LstdFlags)
