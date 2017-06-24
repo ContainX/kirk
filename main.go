@@ -13,7 +13,7 @@ import (
 
 func main() {
 	botConfig := map[string]string{
-		"SLACK_BOT_ACCESS_TOKEN": "xoxb-196008087415-z3m59xI3h3DMMZtLovYsZY40",
+		"SLACK_BOT_ACCESS_TOKEN": "xoxb-196008087415-9cU7HKAsXaspPVULKpUunUQz",
 	}
 
 	api := slack.New(botConfig["SLACK_BOT_ACCESS_TOKEN"])
@@ -35,13 +35,12 @@ func main() {
 			SubscribedProjects: []string{"XOEY", "VOLT"},
 			JiraBaseUrl: "https://jira.auction.com",
 		}
+		fmt.Println("Your captain is here")
 	}
 
 	teamConfig := config.ConfigByTeamId[teamInfo.ID]
 
 	for msg := range rtm.IncomingEvents {
-		fmt.Println("Event Received")
-
 		switch event := msg.Data.(type) {
 		//case *slack.ConnectedEvent:
 		//	fmt.Println("Kirk is connected to Slack")
@@ -100,6 +99,7 @@ func main() {
 							newText += teamConfig.JiraBaseUrl + "/browse/" + issueId + "\n"
 						}
 
+						fmt.Println("Jira issues recongized")
 						if newText != "" {
 							rtm.SendMessage(
 								rtm.NewOutgoingMessage(
