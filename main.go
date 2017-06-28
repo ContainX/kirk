@@ -4,56 +4,20 @@ import (
 	"github.com/nlopes/slack"
 	"github.com/jeremyroberts0/kirk/commands"
 	"github.com/jeremyroberts0/kirk/config"
+	"github.com/jeremyroberts0/kirk/db"
 	"log"
 	"os"
 	"fmt"
 	"strings"
 	"regexp"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 
-type Person struct {
-	Name string
-	Phone string
-}
-
-
 func main() {
-	mongoSession, mongoErr := mgo.Dial("mongodb://mongo:27017")
-	db := mongoSession.DB("kirk")
-	//defer mongoSession.Close()
+	_, mongoSession := db.Init()
+	defer mongoSession.Close()
 
-	if mongoErr != nil {
-		fmt.Println("Error connecting to mongo", mongoErr)
-		panic(mongoErr)
-	}
-
-	// Mongo Testing
-	testCollection := db.C("test")
-	err := testCollection.Insert(&Person{"Jeremy", "408-555-4444"})
-	if err != nil {
-		panic(err)
-	}
-
-	result := Person{}
-	query := testCollection.Find(bson.M{"name": "Jeremy"})
-	err = query.One(&result)
-	if err != nil {
-		panic(err)
-	}
-	count, err := query.Count()
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(count, result)
-
-
-	// End Mongo Testing
-
-
+	// Create botInstances
 
 	botConfig := map[string]string{
 		"SLACK_BOT_ACCESS_TOKEN": os.Getenv("SLACK_BOT_ACCESS_TOKEN"),
@@ -71,19 +35,16 @@ func main() {
 	go rtm.ManageConnection()
 
 	teamInfo, teamInfoErr := api.GetTeamInfo()
+	teamId := teamInfo.ID
 	authTest, botUserErr := api.AuthTest()
 	if teamInfoErr != nil || botUserErr != nil {
 		fmt.Println(teamInfoErr, botUserErr)
 		panic("Initialization error")
-	} else if _, ok := config.ConfigByTeamId[teamInfo.ID]; !ok {
-		config.ConfigByTeamId[teamInfo.ID] = config.TeamConfigStruct{
-			SubscribedProjects: []string{"XOEY", "VOLT"},
-			JiraBaseUrl: "https://jira.auction.com",
-		}
+	} else {
 		fmt.Println("Your captain is here")
 	}
 
-	teamConfig := config.ConfigByTeamId[teamInfo.ID]
+	teamConfig := config.GetTeamConfig(teamInfo.ID)
 
 	for msg := range rtm.IncomingEvents {
 		switch event := msg.Data.(type) {
@@ -109,7 +70,7 @@ func main() {
 
 						if messageIsIm == true {
 							// Direct message to bot
-							responseText := commands.HandleCommand(event.Text, &teamConfig)
+							responseText := commands.HandleCommand(event.Text, teamId)
 							rtm.SendMessage(
 								rtm.NewOutgoingMessage(
 									responseText,
@@ -120,7 +81,7 @@ func main() {
 					}
 				} else {
 					// Message is not special, run through default formatter
-					issueIdRegex := "(" + strings.Join(teamConfig.SubscribedProjects, "|") + `)-\d+`
+					issueIdRegex := "(" + strings.Join(teamConfig.Subscribed_projects, "|") + `)-\d+`
 					issueIdRe := regexp.MustCompile(issueIdRegex)
 					issueIds := issueIdRe.FindAllString(event.Text, -1)
 					if issueIds != nil {
@@ -141,7 +102,7 @@ func main() {
 							if issueIdIsLink == true {
 								continue
 							}
-							newText += teamConfig.JiraBaseUrl + "/browse/" + issueId + "\n"
+							newText += teamConfig.Jira_base_url + "/browse/" + issueId + "\n"
 						}
 
 						fmt.Println("Jira issues recongized")

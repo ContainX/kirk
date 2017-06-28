@@ -3,19 +3,26 @@ package commands
 import (
 	"strings"
 	"github.com/jeremyroberts0/kirk/config"
+	"fmt"
 )
 var jiraBaseUrlConfigKey string = "jira-base-url"
 var projectsConfigKey string = "jira-projects"
 
-func get (userCommand []string, teamConfig *config.TeamConfigStruct) string {
+
+// Struct values must be upper case for them to make it back and forth from mongo
+
+func get (userCommand []string, teamId string) string {
+	// TODO: Mongo query to update in place, without having to make extra trip to get the config
+	teamConfig := config.GetTeamConfig(teamId)
+
 	if len(userCommand) == 2 {
-		return jiraBaseUrlConfigKey + ": " + teamConfig.JiraBaseUrl + "\n" + projectsConfigKey + ": " + strings.Join(teamConfig.SubscribedProjects, ", ")
+		return jiraBaseUrlConfigKey + ": " + teamConfig.Jira_base_url + "\n" + projectsConfigKey + ": " + strings.Join(teamConfig.Subscribed_projects, ", ")
 	} else if len(userCommand) >= 3 {
 		switch userCommand[2] {
 		case jiraBaseUrlConfigKey:
-			return "The JIRA. Base url is: " +  teamConfig.JiraBaseUrl
+			return "The JIRA. Base url is: " +  teamConfig.Jira_base_url
 		case projectsConfigKey:
-			return "The follow. projects. are tracked: " + strings.Join(teamConfig.SubscribedProjects, ", ")
+			return "The follow. projects. are tracked: " + strings.Join(teamConfig.Subscribed_projects, ", ")
 		}
 		return "Could not. find. config value. " + userCommand[2]
 	}
@@ -23,13 +30,22 @@ func get (userCommand []string, teamConfig *config.TeamConfigStruct) string {
 	return unknownResponse
 }
 
-func set (userCommand []string, teamConfig *config.TeamConfigStruct) string {
+func set (userCommand []string, teamId string) string {
+	// TODO: Mongo query to update in place, without having to make extra trip to get the config
+	teamConfig := config.GetTeamConfig(teamId)
+	configCollection := config.GetConfigCollection()
+
 	if len(userCommand) >= 4 {
 		switch userCommand[2] {
 		case jiraBaseUrlConfigKey:
 			// Slack adds < and > when URLs are detected
-			teamConfig.JiraBaseUrl = strings.Trim(userCommand[3], "<>")
-			return "I've changed. Your JIRA Base. URL. to " + teamConfig.JiraBaseUrl
+			teamConfig.Jira_base_url = strings.Trim(userCommand[3], "<>")
+			updateErr := configCollection.UpdateId(teamConfig.Id, teamConfig)
+			if updateErr != nil {
+				fmt.Println("Update error", updateErr)
+				return "I. Encountered a problem. Updating your configuration"
+			}
+			return "I've changed. Your JIRA Base. URL. to " + teamConfig.Jira_base_url
 		}
 
 		return userCommand[2] + " is not. a. config value."
@@ -40,16 +56,20 @@ func set (userCommand []string, teamConfig *config.TeamConfigStruct) string {
 	return unknownResponse
 }
 
-func add (userCommand []string, teamConfig *config.TeamConfigStruct) string {
+func add (userCommand []string, teamId string) string {
+	teamConfig := config.GetTeamConfig(teamId)
+	configCollection := config.GetConfigCollection()
+
 	if len(userCommand) >= 4 {
 		switch userCommand[2] {
 		case projectsConfigKey:
-			for _, project := range teamConfig.SubscribedProjects {
+			for _, project := range teamConfig.Subscribed_projects {
 				if project == userCommand[3] {
 					return project + " is. already tracked."
 				}
 			}
-			teamConfig.SubscribedProjects = append(teamConfig.SubscribedProjects, userCommand[3])
+			teamConfig.Subscribed_projects = append(teamConfig.Subscribed_projects, userCommand[3])
+			configCollection.UpdateId(teamConfig.Id, teamConfig)
 			return userCommand[3] + " project. added. to tracked projects"
 		}
 	}
@@ -57,13 +77,17 @@ func add (userCommand []string, teamConfig *config.TeamConfigStruct) string {
 	return unknownResponse
 }
 
-func remove (userCommand []string, teamConfig *config.TeamConfigStruct) string {
+func remove (userCommand []string, teamId string) string {
+	teamConfig := config.GetTeamConfig(teamId)
+	configCollection := config.GetConfigCollection()
+
 	if len(userCommand) >= 4 {
 		switch userCommand[2] {
 		case projectsConfigKey:
-			for index, project := range teamConfig.SubscribedProjects {
+			for index, project := range teamConfig.Subscribed_projects {
 				if project == userCommand[3] {
-					teamConfig.SubscribedProjects = append(teamConfig.SubscribedProjects[:index], teamConfig.SubscribedProjects[index+1:]...)
+					teamConfig.Subscribed_projects = append(teamConfig.Subscribed_projects[:index], teamConfig.Subscribed_projects[index+1:]...)
+					configCollection.UpdateId(teamConfig.Id, teamConfig)
 					return userCommand[3] + " project. no longer. tracked"
 					break
 				}
@@ -73,16 +97,16 @@ func remove (userCommand []string, teamConfig *config.TeamConfigStruct) string {
 	return unknownResponse
 }
 
-func configCommand (userCommand []string, teamConfig *config.TeamConfigStruct) string {
+func configCommand (userCommand []string, teamId string) string {
 	switch userCommand[1] {
 	case "get":
-		return get(userCommand, teamConfig)
+		return get(userCommand, teamId)
 	case "set":
-		return set(userCommand, teamConfig)
+		return set(userCommand, teamId)
 	case "add":
-		return add(userCommand, teamConfig)
+		return add(userCommand, teamId)
 	case "remove":
-		return remove(userCommand, teamConfig)
+		return remove(userCommand, teamId)
 	}
 
 	return unknownResponse
