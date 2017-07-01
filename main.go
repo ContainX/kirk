@@ -2,31 +2,33 @@ package main
 
 import (
 	"github.com/jeremyroberts0/kirk/db"
-	"os"
 	"fmt"
+	"github.com/jeremyroberts0/kirk/slackTeam"
+	"github.com/jeremyroberts0/kirk/config"
 )
 
 func main() {
 
-	oauthScopes := []string{
-		"channels:read",
-		"chat:write:user", // or bot?
-		"team:read",
-	}
-
-
-	fmt.Println(oauthScopes)
-
+	// Connect to Mongo
 	_, mongoSession := db.Init()
 	defer mongoSession.Close()
 
 	// Create botInstances
-	botConfig := map[string]string{
-		"SLACK_BOT_ACCESS_TOKEN": os.Getenv("SLACK_BOT_ACCESS_TOKEN"),
+	fmt.Println("Recreating bot instances")
+	err, configs := config.GetAllConfig()
+	if err != nil {
+		panic("Could not get team configs")
 	}
-	fmt.Println(botConfig)
+	for _, config := range configs {
+		if config.Access_token != "" {
+			slackTeam.Watch(config.Access_token)
+			fmt.Println("Watching team")
+		} else {
+			fmt.Println("Config missing access token", config)
+		}
+	}
 
-	watchTeam(botConfig["SLACK_BOT_ACCESS_TOKEN"])
-
-	fmt.Println("Kirk. is started.")
+	// Start HTTP Server
+	router := getRouter()
+	router.Run(":8080")
 }

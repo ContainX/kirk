@@ -7,13 +7,17 @@ import (
 )
 var jiraBaseUrlConfigKey string = "jira-base-url"
 var projectsConfigKey string = "jira-projects"
+const noConfigMessage string = "I. could not find. your. team's config"
 
 
 // Struct values must be upper case for them to make it back and forth from mongo
 
 func get (userCommand []string, teamId string) string {
 	// TODO: Mongo query to update in place, without having to make extra trip to get the config
-	teamConfig := config.GetTeamConfig(teamId)
+	err, teamConfig := config.GetTeamConfig(teamId)
+	if err != nil {
+		return noConfigMessage
+	}
 
 	if len(userCommand) == 2 {
 		return jiraBaseUrlConfigKey + ": " + teamConfig.Jira_base_url + "\n" + projectsConfigKey + ": " + strings.Join(teamConfig.Subscribed_projects, ", ")
@@ -32,7 +36,10 @@ func get (userCommand []string, teamId string) string {
 
 func set (userCommand []string, teamId string) string {
 	// TODO: Mongo query to update in place, without having to make extra trip to get the config
-	teamConfig := config.GetTeamConfig(teamId)
+	err, teamConfig := config.GetTeamConfig(teamId)
+	if err != nil {
+		return noConfigMessage
+	}
 	configCollection := config.GetConfigCollection()
 
 	if len(userCommand) >= 4 {
@@ -57,7 +64,10 @@ func set (userCommand []string, teamId string) string {
 }
 
 func add (userCommand []string, teamId string) string {
-	teamConfig := config.GetTeamConfig(teamId)
+	err, teamConfig := config.GetTeamConfig(teamId)
+	if err != nil {
+		return noConfigMessage
+	}
 	configCollection := config.GetConfigCollection()
 
 	if len(userCommand) >= 4 {
@@ -78,7 +88,10 @@ func add (userCommand []string, teamId string) string {
 }
 
 func remove (userCommand []string, teamId string) string {
-	teamConfig := config.GetTeamConfig(teamId)
+	err, teamConfig := config.GetTeamConfig(teamId)
+	if err != nil {
+		return noConfigMessage
+	}
 	configCollection := config.GetConfigCollection()
 
 	if len(userCommand) >= 4 {

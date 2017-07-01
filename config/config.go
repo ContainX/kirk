@@ -5,39 +5,68 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/jeremyroberts0/kirk/db"
 	"fmt"
+	"github.com/nlopes/slack"
+	"errors"
 )
 
 type TeamConfig struct{
-	Id                 	bson.ObjectId `bson:"_id"`
-	Team_id             string
-	Jira_base_url       string
-	Subscribed_projects []string
+	Id                 	bson.ObjectId `bson:"_id,omitempty"`
+	Team_id             string `bson:"team_id,omitempty"`
+	Jira_base_url       string `bson:"jira_base_url,omitempty"`
+	Subscribed_projects []string `bson:"subscribed_projects,omitempty"`
+	Access_token		string `bson:"access_token,omitempty"`
 }
 
 func GetConfigCollection () *mgo.Collection {
 	return db.Instance.C("config")
 }
-func GetTeamConfig(teamId string) TeamConfig {
+func GetAllConfig () (error, []TeamConfig) {
+	var results []TeamConfig
+	collection := GetConfigCollection()
+	err := collection.Find(nil).All(&results)
+	return err, results
+}
+func GetTeamConfig(teamId string) (error, TeamConfig) {
+	// TODO: Cache team config so we don't have to go to DB on every message
+	// TODO: Caching will require updates run through this file as well
 	teamConfig := TeamConfig{}
 	collection := GetConfigCollection()
 	query := bson.M{"team_id": teamId}
 	err := collection.Find(query).One(&teamConfig)
 
 	if err != nil {
-		fmt.Println("Config not found", err)
-		// Setup config if it is missing
-		insertErr := collection.Insert(&TeamConfig{
-			Team_id:             teamId,
-			Jira_base_url:       "BASE_URL_NOT_SET",
-			Subscribed_projects: make([]string, 0),
-		})
-		if insertErr != nil {
-			fmt.Println("Error inserting new config for team", teamId, insertErr)
-		}
-
-		collection.Find(query).One(&teamConfig)
-		fmt.Println("Created new config for team", teamId,  teamConfig)
+		// Should never get here, team config should be created during oauth flow
+		fmt.Println("Team Config not found", err)
+		return errors.New("Error getting team config"), TeamConfig{}
 	}
 
-	return teamConfig
+	return nil, teamConfig
+}
+func AddNewTeam (accessToken string) error {
+	api := slack.New(accessToken)
+	teamInfo, teamInfoErr := api.GetTeamInfo()
+
+	if teamInfoErr != nil {
+		fmt.Println("Error getting team info", teamInfoErr)
+		return errors.New("Error getting team info")
+	}
+
+	collection := GetConfigCollection()
+	teamConfig := TeamConfig{}
+
+	err := collection.Find(bson.M{"team_id": teamInfo.ID}).One(&teamConfig)
+
+	if err != nil {
+		// Team does not exist
+		insertErr := collection.Insert(TeamConfig{
+			Team_id: teamInfo.ID,
+			Access_token: accessToken,
+		})
+		if insertErr != nil {
+			fmt.Println("Error creating team config", insertErr)
+			return errors.New("Error creating team config")
+		}
+	}
+
+	return nil
 }

@@ -5,12 +5,12 @@ services:
       context: .
     env_file:
       - ./.env
-    environment:
-      APP_ENV: development
     volumes:
       - ./:/go/src/github.com/jeremyroberts0/kirk
     links:
       - mongo
+    ports:
+      - "8080:8080"
   mongo:
     image: mongo
     volumes:

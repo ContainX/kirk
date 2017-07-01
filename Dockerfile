@@ -9,6 +9,8 @@ WORKDIR /go/src/github.com/jeremyroberts0/kirk
 RUN go get ./
 RUN go build
 
+EXPOSE 8080:8080
+
 CMD if [ ${APP_ENV} != development ]; \
 	then \
 	kirk; \
