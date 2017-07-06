@@ -4,7 +4,6 @@ Kirk is a Slack bot to integrate Slack and JIRA.  Kirk can:
 
 ## Deployment
 Kirk requires the following environment variables to deploy:
-- `SLACK_BOT_ACCESS_TOKEN`: Provided by Slack
 - `SLACK_CLIENT_ID`: Provided by Slack
 - `SLACK_CLIENT_SECRET`: Provided by Slack
 - `PUBLIC_HOST`: The publicly accessible hostname and port Kirk is accessible at (e.g. `localhost:8080` for local development)

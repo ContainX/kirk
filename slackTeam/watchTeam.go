@@ -2,8 +2,8 @@ package slackTeam
 
 import (
 	"fmt"
-	"github.com/jeremyroberts0/kirk/commands"
-	"github.com/jeremyroberts0/kirk/config"
+	"github.com/ContainX/kirk/commands"
+	"github.com/ContainX/kirk/config"
 	"github.com/nlopes/slack"
 	"log"
 	"os"

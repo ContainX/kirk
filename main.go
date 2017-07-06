@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/jeremyroberts0/kirk/config"
-	"github.com/jeremyroberts0/kirk/db"
-	"github.com/jeremyroberts0/kirk/slackTeam"
+	"github.com/ContainX/kirk/config"
+	"github.com/ContainX/kirk/db"
+	"github.com/ContainX/kirk/slackTeam"
 )
 
 func main() {

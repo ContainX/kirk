@@ -2,7 +2,7 @@ package commands
 
 import (
 	"fmt"
-	"github.com/jeremyroberts0/kirk/config"
+	"github.com/ContainX/kirk/config"
 	"strings"
 )
 

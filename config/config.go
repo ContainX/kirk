@@ -3,7 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
-	"github.com/jeremyroberts0/kirk/db"
+	"github.com/ContainX/kirk/db"
 	"github.com/nlopes/slack"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

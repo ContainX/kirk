@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/jeremyroberts0/kirk/routes"
+	"github.com/ContainX/kirk/routes"
 	"gopkg.in/gin-gonic/gin.v1"
 )
 

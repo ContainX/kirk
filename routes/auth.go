@@ -2,8 +2,8 @@ package routes
 
 import (
 	"fmt"
-	"github.com/jeremyroberts0/kirk/config"
-	"github.com/jeremyroberts0/kirk/slackTeam"
+	"github.com/ContainX/kirk/config"
+	"github.com/ContainX/kirk/slackTeam"
 	"github.com/nlopes/slack"
 	"gopkg.in/gin-gonic/gin.v1"
 	"net/url"

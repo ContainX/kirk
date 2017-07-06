@@ -6,7 +6,7 @@ services:
     env_file:
       - ./.env
     volumes:
-      - ./:/go/src/github.com/jeremyroberts0/kirk
+      - ./:/go/src/github.com/ContainX/kirk
     links:
       - mongo
     ports:
