@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/jeremyroberts0/kirk/db"
 	"fmt"
-	"github.com/jeremyroberts0/kirk/slackTeam"
 	"github.com/jeremyroberts0/kirk/config"
+	"github.com/jeremyroberts0/kirk/db"
+	"github.com/jeremyroberts0/kirk/slackTeam"
 )
 
 func main() {

@@ -6,7 +6,7 @@ import (
 
 const unknownResponse string = "I. don't know. how to handle. that command.  Type `help`. for more. info."
 
-func HandleCommand (commandText string, teamId string) string {
+func HandleCommand(commandText string, teamId string) string {
 	userCommand := strings.Split(commandText, " ")
 
 	switch userCommand[0] {

@@ -1,18 +1,19 @@
 package commands
 
 import (
-	"strings"
-	"github.com/jeremyroberts0/kirk/config"
 	"fmt"
+	"github.com/jeremyroberts0/kirk/config"
+	"strings"
 )
+
 var jiraBaseUrlConfigKey string = "jira-base-url"
 var projectsConfigKey string = "jira-projects"
-const noConfigMessage string = "I. could not find. your. team's config"
 
+const noConfigMessage string = "I. could not find. your. team's config"
 
 // Struct values must be upper case for them to make it back and forth from mongo
 
-func get (userCommand []string, teamId string) string {
+func get(userCommand []string, teamId string) string {
 	// TODO: Mongo query to update in place, without having to make extra trip to get the config
 	err, teamConfig := config.GetTeamConfig(teamId)
 	if err != nil {
@@ -24,7 +25,7 @@ func get (userCommand []string, teamId string) string {
 	} else if len(userCommand) >= 3 {
 		switch userCommand[2] {
 		case jiraBaseUrlConfigKey:
-			return "The JIRA. Base url is: " +  teamConfig.Jira_base_url
+			return "The JIRA. Base url is: " + teamConfig.Jira_base_url
 		case projectsConfigKey:
 			return "The follow. projects. are tracked: " + strings.Join(teamConfig.Subscribed_projects, ", ")
 		}
@@ -34,7 +35,7 @@ func get (userCommand []string, teamId string) string {
 	return unknownResponse
 }
 
-func set (userCommand []string, teamId string) string {
+func set(userCommand []string, teamId string) string {
 	// TODO: Mongo query to update in place, without having to make extra trip to get the config
 	err, teamConfig := config.GetTeamConfig(teamId)
 	if err != nil {
@@ -63,7 +64,7 @@ func set (userCommand []string, teamId string) string {
 	return unknownResponse
 }
 
-func add (userCommand []string, teamId string) string {
+func add(userCommand []string, teamId string) string {
 	err, teamConfig := config.GetTeamConfig(teamId)
 	if err != nil {
 		return noConfigMessage
@@ -87,7 +88,7 @@ func add (userCommand []string, teamId string) string {
 	return unknownResponse
 }
 
-func remove (userCommand []string, teamId string) string {
+func remove(userCommand []string, teamId string) string {
 	err, teamConfig := config.GetTeamConfig(teamId)
 	if err != nil {
 		return noConfigMessage
@@ -110,7 +111,7 @@ func remove (userCommand []string, teamId string) string {
 	return unknownResponse
 }
 
-func configCommand (userCommand []string, teamId string) string {
+func configCommand(userCommand []string, teamId string) string {
 	switch userCommand[1] {
 	case "get":
 		return get(userCommand, teamId)

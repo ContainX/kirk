@@ -1,17 +1,17 @@
 package routes
 
 import (
+	"fmt"
+	"github.com/jeremyroberts0/kirk/config"
+	"github.com/jeremyroberts0/kirk/slackTeam"
+	"github.com/nlopes/slack"
 	"gopkg.in/gin-gonic/gin.v1"
 	"net/url"
 	"os"
 	"strings"
-	"fmt"
-	"github.com/nlopes/slack"
-	"github.com/jeremyroberts0/kirk/config"
-	"github.com/jeremyroberts0/kirk/slackTeam"
 )
 
-func Auth (router *gin.Engine) {
+func Auth(router *gin.Engine) {
 	// Some statics for handling oauth
 	authorizedRoute := "/authorized"
 	authorizedRouteRedirectUri := "http://" + os.Getenv("PUBLIC_HOST") + authorizedRoute
@@ -35,7 +35,7 @@ func Auth (router *gin.Engine) {
 
 	// 1. User visits initial authorize route and is redirected to Slack
 	router.GET("/authorize", func(context *gin.Context) {
-		context.Redirect(308, "https://slack.com/oauth/authorize?" + queryParams.Encode())
+		context.Redirect(308, "https://slack.com/oauth/authorize?"+queryParams.Encode())
 	})
 
 	// 2. Once user authorizes app on Slack's end, Slack redirects user back to Kirk.

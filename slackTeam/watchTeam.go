@@ -1,25 +1,25 @@
 package slackTeam
 
 import (
-	"github.com/jeremyroberts0/kirk/commands"
-	"strings"
-	"regexp"
 	"fmt"
+	"github.com/jeremyroberts0/kirk/commands"
+	"github.com/jeremyroberts0/kirk/config"
+	"github.com/nlopes/slack"
 	"log"
 	"os"
-	"github.com/nlopes/slack"
-	"github.com/jeremyroberts0/kirk/config"
+	"regexp"
+	"strings"
 	"sync"
 )
 
-func Watch (token string) {
+func Watch(token string) {
 	var startedWg sync.WaitGroup
 	startedWg.Add(1)
 	go watchTeam(token, &startedWg)
 	startedWg.Wait()
 }
 
-func watchTeam (token string, startedWg *sync.WaitGroup) {
+func watchTeam(token string, startedWg *sync.WaitGroup) {
 	fmt.Println("Preparing to watch", token)
 	logger := log.New(os.Stdout, "slack-bot:", log.Lshortfile|log.LstdFlags)
 	slack.SetLogger(logger)

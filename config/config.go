@@ -1,26 +1,26 @@
 package config
 
 import (
+	"errors"
+	"fmt"
+	"github.com/jeremyroberts0/kirk/db"
+	"github.com/nlopes/slack"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/jeremyroberts0/kirk/db"
-	"fmt"
-	"github.com/nlopes/slack"
-	"errors"
 )
 
-type TeamConfig struct{
-	Id                 	bson.ObjectId `bson:"_id,omitempty"`
-	Team_id             string `bson:"team_id,omitempty"`
-	Jira_base_url       string `bson:"jira_base_url,omitempty"`
-	Subscribed_projects []string `bson:"subscribed_projects,omitempty"`
-	Access_token		string `bson:"access_token,omitempty"`
+type TeamConfig struct {
+	Id                  bson.ObjectId `bson:"_id,omitempty"`
+	Team_id             string        `bson:"team_id,omitempty"`
+	Jira_base_url       string        `bson:"jira_base_url,omitempty"`
+	Subscribed_projects []string      `bson:"subscribed_projects,omitempty"`
+	Access_token        string        `bson:"access_token,omitempty"`
 }
 
-func GetConfigCollection () *mgo.Collection {
+func GetConfigCollection() *mgo.Collection {
 	return db.Instance.C("config")
 }
-func GetAllConfig () (error, []TeamConfig) {
+func GetAllConfig() (error, []TeamConfig) {
 	var results []TeamConfig
 	collection := GetConfigCollection()
 	err := collection.Find(nil).All(&results)
@@ -42,7 +42,7 @@ func GetTeamConfig(teamId string) (error, TeamConfig) {
 
 	return nil, teamConfig
 }
-func AddNewTeam (accessToken string) error {
+func AddNewTeam(accessToken string) error {
 	api := slack.New(accessToken)
 	teamInfo, teamInfoErr := api.GetTeamInfo()
 
@@ -59,7 +59,7 @@ func AddNewTeam (accessToken string) error {
 	if err != nil {
 		// Team does not exist
 		insertErr := collection.Insert(TeamConfig{
-			Team_id: teamInfo.ID,
+			Team_id:      teamInfo.ID,
 			Access_token: accessToken,
 		})
 		if insertErr != nil {
