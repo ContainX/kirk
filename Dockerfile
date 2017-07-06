@@ -1,8 +1,5 @@
 FROM golang:1.8
 
-ARG app_env
-ENV APP_ENV $app_env
-
 COPY ./ /go/src/github.com/ContainX/kirk
 WORKDIR /go/src/github.com/ContainX/kirk
 

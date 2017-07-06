@@ -2,9 +2,8 @@ package db
 
 import (
 	"gopkg.in/mgo.v2"
-	//"fmt"
-	//"gopkg.in/mgo.v2/bson"
 	"fmt"
+	"os"
 )
 
 var MongoSession *mgo.Session
@@ -13,7 +12,9 @@ var Instance *mgo.Database
 
 func Init() (*mgo.Database, *mgo.Session) {
 
-	MongoSession, mongoErr = mgo.Dial("mongodb://mongo:27017")
+	mongoUrl := os.Getenv("MONGO_URL")
+	fmt.Println("Mongo URL", mongoUrl)
+	MongoSession, mongoErr = mgo.Dial(mongoUrl)
 	if mongoErr != nil {
 		fmt.Println("Error connecting to mongo", mongoErr)
 		panic(mongoErr)
