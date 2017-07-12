@@ -8,7 +8,7 @@ services:
   - docker
 
 install:
-  - docker login -e="$DOCKER_EMAIL" -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
+  - docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
   - docker build -t containx/kirk .
   - docker tag containx/kirk containx/kirk:$TRAVIS_BUILD_NUMBER
   - docker run -d -p 127.0.0.1:8080:8080 --name kirk containx/kirk
