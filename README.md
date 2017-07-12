@@ -1,4 +1,7 @@
 # Kirk
+
+[![Build Status](https://travis-ci.org/ContainX/kirk.svg)](https://travis-ci.org/ContainX/kirk)
+
 Kirk is a Slack bot to integrate Slack and JIRA.  Kirk can:
 - Automatically post links to JIRA when a JIRA issue ID is detected in a channel Kirk is a member of
 

@@ -14,7 +14,7 @@ install:
   - docker run -d -p 127.0.0.1:8080:8080 --name kirk containx/kirk
 
 script:
-  - docker ps | grep -q netshare
+  - docker ps | grep -q kirk
 
 after_success:
   - docker push containx/kirk
