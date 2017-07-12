@@ -23,7 +23,7 @@ func get(userCommand []string, teamId string) string {
 	if len(userCommand) == 2 {
 		return jiraBaseUrlConfigKey + ": " + teamConfig.Jira_base_url + "\n" + projectsConfigKey + ": " + strings.Join(teamConfig.Subscribed_projects, ", ")
 	} else if len(userCommand) >= 3 {
-		switch userCommand[2] {
+		switch strings.ToLower(userCommand[2]) {
 		case jiraBaseUrlConfigKey:
 			return "The JIRA. Base url is: " + teamConfig.Jira_base_url
 		case projectsConfigKey:
@@ -44,7 +44,7 @@ func set(userCommand []string, teamId string) string {
 	configCollection := config.GetConfigCollection()
 
 	if len(userCommand) >= 4 {
-		switch userCommand[2] {
+		switch strings.ToLower(userCommand[2]) {
 		case jiraBaseUrlConfigKey:
 			// Slack adds < and > when URLs are detected
 			teamConfig.Jira_base_url = strings.Trim(userCommand[3], "<>")
@@ -72,7 +72,7 @@ func add(userCommand []string, teamId string) string {
 	configCollection := config.GetConfigCollection()
 
 	if len(userCommand) >= 4 {
-		switch userCommand[2] {
+		switch strings.ToLower(userCommand[2]) {
 		case projectsConfigKey:
 			for _, project := range teamConfig.Subscribed_projects {
 				if project == userCommand[3] {
@@ -96,7 +96,7 @@ func remove(userCommand []string, teamId string) string {
 	configCollection := config.GetConfigCollection()
 
 	if len(userCommand) >= 4 {
-		switch userCommand[2] {
+		switch strings.ToLower(userCommand[2]) {
 		case projectsConfigKey:
 			for index, project := range teamConfig.Subscribed_projects {
 				if project == userCommand[3] {
@@ -112,7 +112,7 @@ func remove(userCommand []string, teamId string) string {
 }
 
 func configCommand(userCommand []string, teamId string) string {
-	switch userCommand[1] {
+	switch strings.ToLower(userCommand[1]) {
 	case "get":
 		return get(userCommand, teamId)
 	case "set":

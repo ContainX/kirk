@@ -89,7 +89,7 @@ func watchTeam(token string, startedWg *sync.WaitGroup) {
 						if err != nil {
 							fmt.Println("Error getting team config when processing message")
 						} else {
-							issueIdRegex := "(" + strings.Join(teamConfig.Subscribed_projects, "|") + `)-\d+`
+							issueIdRegex := "(?i)(" + strings.Join(teamConfig.Subscribed_projects, "|") + `)-\d+`
 							issueIdRe := regexp.MustCompile(issueIdRegex)
 							issueIds := issueIdRe.FindAllString(event.Text, -1)
 							if issueIds != nil {

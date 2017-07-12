@@ -9,7 +9,7 @@ const unknownResponse string = "I. don't know. how to handle. that command.  Typ
 func HandleCommand(commandText string, teamId string) string {
 	userCommand := strings.Split(commandText, " ")
 
-	switch userCommand[0] {
+	switch strings.ToLower(userCommand[0]) {
 	case "config":
 		return configCommand(userCommand, teamId)
 	case "help":
