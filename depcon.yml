@@ -38,6 +38,10 @@ labels:
   role: kirk
   HAPROXY_GROUP: external
   HAPROXY_0_VHOST: kirkbot
+  MARATHON_SINGLE_INSTANCE_APP: "true"  
+upgradeStrategy:
+  maximumOverCapacity: 0
+  minimumHealthCapacity: 0
 healthChecks:
 - portIndex: 0
   protocol: TCP
