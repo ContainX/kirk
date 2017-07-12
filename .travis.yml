@@ -19,7 +19,7 @@ script:
 after_success:
   - docker push containx/kirk
   - docker push containx/kirk:$TRAVIS_BUILD_NUMBER
-  - docker run -e DEPCON_MODE=$DEPCON_MODE -e MARATHON_HOST=$MARATHON_HOST -e MARATHON_USER=$MARATHON_USER -e MARATHON_PASS=$MARATHON_PASS -v $PWD:/data containx/kirk app create /data/depcon.yml -p VERSION=$TRAVIS_BUILD_NUMBER -p SLACK_CLIENT_ID=$SLACK_CLIENT_ID -p SLACK_CLIENT_SECRET=$SLACK_CLIENT_SECRET --wait --force
+  - docker run -e DEPCON_MODE=$DEPCON_MODE -e MARATHON_HOST=$MARATHON_HOST -e MARATHON_USER=$MARATHON_USER -e MARATHON_PASS=$MARATHON_PASS -v $PWD:/data containx/depcon app create /data/depcon.yml -p VERSION=$TRAVIS_BUILD_NUMBER -p SLACK_CLIENT_ID=$SLACK_CLIENT_ID -p SLACK_CLIENT_SECRET=$SLACK_CLIENT_SECRET --wait --force
 
 # whitelist
 branches:
