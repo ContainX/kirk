@@ -1,0 +1,47 @@
+id: /bots/kirk/slackbot
+cpus: 0.5
+mem: 600.0
+instances: 1
+constraints:
+- - hostname
+  - UNIQUE
+container:
+  type: DOCKER
+  docker:
+    image: containx/kirk:${VERSION}
+    network: BRIDGE
+    forcePullImage: false
+    parameters:
+    - key: hostname
+      value: kirk.containx.local
+    - key: net
+      value: weave
+    - key: env
+      value: MONGO_URL=mongodb://kirk-mongo.containx.local:27017
+    - key: env
+      value: SLACK_CLIENT_ID=${SLACK_CLIENT_ID}
+    - key: env
+      value: SLACK_CLIENT_SECRET=${SLACK_CLIENT_SECRET}
+    - key: env
+      value: PUBLIC_HOST=kirkbot.com
+    - key: env
+      value: APP_ENV=production
+    portMappings:
+    - containerPort: 8080
+      hostPort: 0
+      servicePort: 8150
+      protocol: tcp
+uris:
+- file:///etc/docker.tar.gz
+labels:
+  group: bot
+  role: kirk
+  HAPROXY_GROUP: external
+  HAPROXY_0_VHOST: kirkbot
+healthChecks:
+- portIndex: 0
+  protocol: TCP
+  gracePeriodSeconds: 300
+  intervalSeconds: 30
+  timeoutSeconds: 20
+  maxConsecutiveFailures: 3
