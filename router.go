@@ -2,12 +2,24 @@ package main
 
 import (
 	"github.com/ContainX/kirk/routes"
-	"gopkg.in/gin-gonic/gin.v1"
+	"github.com/ContainX/kirk/tracer"
+	"github.com/gin-gonic/gin"
 )
+
+func statsDMiddleware(c *gin.Context) {
+	tracer.Get().Incr("requests.total", []string{"url:" + c.Request.URL.Path}, 1)
+	c.Next()
+}
 
 func getRouter() *gin.Engine {
 
 	router := gin.Default()
+
+	// APM
+	// t := ddTracer.NewTracerTransport(ddTracer.NewTransport(os.Getenv("HOST"), "8126"))
+	// router.Use(gintrace.MiddlewareTracer("kirk", t))
+
+	router.Use(statsDMiddleware)
 
 	router.LoadHTMLGlob("html/*")
 	router.StaticFile("/", "./static/html/index.html")
@@ -16,5 +28,4 @@ func getRouter() *gin.Engine {
 	routes.Auth(router)
 
 	return router
-
 }

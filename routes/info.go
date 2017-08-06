@@ -1,6 +1,6 @@
 package routes
 
-import "gopkg.in/gin-gonic/gin.v1"
+import "github.com/gin-gonic/gin"
 
 func Info(router *gin.Engine) {
 	router.GET("/info", func(context *gin.Context) {

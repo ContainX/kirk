@@ -2,13 +2,14 @@ package routes
 
 import (
 	"fmt"
-	"github.com/ContainX/kirk/config"
-	"github.com/ContainX/kirk/slackTeam"
-	"github.com/nlopes/slack"
-	"gopkg.in/gin-gonic/gin.v1"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/ContainX/kirk/config"
+	"github.com/ContainX/kirk/slackTeam"
+	"github.com/gin-gonic/gin"
+	"github.com/nlopes/slack"
 )
 
 func Auth(router *gin.Engine) {
