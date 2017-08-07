@@ -2,8 +2,9 @@ package commands
 
 import (
 	"fmt"
-	"github.com/ContainX/kirk/config"
 	"strings"
+
+	"github.com/ContainX/kirk/config"
 )
 
 var jiraBaseUrlConfigKey string = "jira-base-url"
@@ -103,7 +104,6 @@ func remove(userCommand []string, teamId string) string {
 					teamConfig.Subscribed_projects = append(teamConfig.Subscribed_projects[:index], teamConfig.Subscribed_projects[index+1:]...)
 					configCollection.UpdateId(teamConfig.Id, teamConfig)
 					return userCommand[3] + " project. no longer. tracked"
-					break
 				}
 			}
 		}
