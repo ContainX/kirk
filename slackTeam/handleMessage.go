@@ -73,10 +73,10 @@ func handleMessage(event *slack.MessageEvent, rtm slack.RTM, teamInfo slack.Team
 						if issueIdIsLink == true {
 							continue
 						}
-						tracer.Get().Incr("issueId.matched", []string{"team:" + teamId}, 1)
 						newText += teamConfig.Jira_base_url + "/browse/" + issueId + "\n"
 					}
 
+					tracer.Get().Histogram("issueId.matched", float64(len(issueIds)), []string{"team:" + teamId}, 1)
 					fmt.Println("Jira issues recongized")
 					if newText != "" {
 						rtm.SendMessage(
