@@ -55,6 +55,8 @@ func watchTeam(token string, startedWg *sync.WaitGroup) {
 		for msg := range rtm.IncomingEvents {
 			//Print all events, for debug purposes
 			//fmt.Printf("Event Received %+v\n", msg)
+
+			// Team is active if it is receiving events
 			tracer.Get().Incr("teams.active", []string{"team:" + teamId}, 1)
 			switch event := msg.Data.(type) {
 			//TODO: Listen for token revoked event and invalidate in DB
