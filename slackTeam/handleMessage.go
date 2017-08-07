@@ -1,16 +1,23 @@
 package slackTeam
 
 import (
-	"github.com/nlopes/slack"
-	"strings"
-	"github.com/ContainX/kirk/commands"
-	"github.com/ContainX/kirk/config"
 	"fmt"
 	"regexp"
+	"strings"
+
+	"github.com/ContainX/kirk/commands"
+	"github.com/ContainX/kirk/config"
+	"github.com/ContainX/kirk/tracer"
+	"github.com/nlopes/slack"
 )
 
 func handleMessage(event *slack.MessageEvent, rtm slack.RTM, teamInfo slack.TeamInfo, botUserId string) {
 	teamId := teamInfo.ID
+
+	// Instrument time it takes to handle the message
+	t := tracer.Timer("handleMessage.latency", []string{"team:" + teamId})
+	defer t.End()
+
 	if event.User != botUserId {
 		// Don't respond to messages from self
 		if strings.HasPrefix(event.Channel, "D") == true {
@@ -44,6 +51,7 @@ func handleMessage(event *slack.MessageEvent, rtm slack.RTM, teamInfo slack.Team
 			if err != nil {
 				fmt.Println("Error getting team config when processing message")
 			} else {
+				tracer.Get().Incr("projects.watched", []string{"team:", teamId}, 1)
 				issueIdRegex := "(?i)(" + strings.Join(teamConfig.Subscribed_projects, "|") + `)-\d+`
 				issueIdRe := regexp.MustCompile(issueIdRegex)
 				issueIds := issueIdRe.FindAllString(event.Text, -1)

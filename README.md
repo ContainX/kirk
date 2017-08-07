@@ -10,7 +10,7 @@ Kirk requires the following environment variables to deploy:
 - `SLACK_CLIENT_ID`: Provided by Slack
 - `SLACK_CLIENT_SECRET`: Provided by Slack
 - `PUBLIC_HOST`: The publicly accessible hostname and port Kirk is accessible at (e.g. `localhost:8080` for local development)
-- `DD_BIND_HOST`: The host where the datadog agent is running
+- `HOST`: The host where the datadog agent is running
 
 Environment variables can be configured by add a `.env` file at the app root (alongside `main.go`)
 

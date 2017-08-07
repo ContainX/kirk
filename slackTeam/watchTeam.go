@@ -2,11 +2,13 @@ package slackTeam
 
 import (
 	"fmt"
-	"github.com/ContainX/kirk/config"
-	"github.com/nlopes/slack"
 	"log"
 	"os"
 	"sync"
+
+	"github.com/ContainX/kirk/config"
+	"github.com/ContainX/kirk/tracer"
+	"github.com/nlopes/slack"
 )
 
 var logger = log.New(os.Stdout, "slack-bot:", log.Lshortfile|log.LstdFlags)
@@ -38,6 +40,7 @@ func watchTeam(token string, startedWg *sync.WaitGroup) {
 		fmt.Println(teamInfoErr, botUserErr)
 		panic("Initialization error")
 	} else {
+		tracer.Get().Incr("teams.watched", []string{"team:" + teamId}, 1)
 		fmt.Println("Listening to team", teamId)
 	}
 
