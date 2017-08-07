@@ -3,7 +3,9 @@ package config
 import (
 	"errors"
 	"fmt"
+
 	"github.com/ContainX/kirk/db"
+	"github.com/ContainX/kirk/tracer"
 	"github.com/nlopes/slack"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -67,6 +69,8 @@ func AddNewTeam(accessToken string) error {
 			return errors.New("Error creating team config")
 		}
 	}
+
+	tracer.Get().Incr("teamAdded", []string{"team:" + teamInfo.ID}, 1)
 
 	return nil
 }
