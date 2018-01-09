@@ -12,5 +12,5 @@ func init() {
 }
 
 func versionCommand() string {
-	return fmt.Sprintf("I was last updated at: %v", lastUpdated)
+	return fmt.Sprintf("I was restarted at: %v", lastUpdated)
 }
