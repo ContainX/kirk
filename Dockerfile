@@ -1,4 +1,4 @@
-FROM golang:1.8
+FROM golang:1.9.2
 
 COPY ./ /go/src/github.com/ContainX/kirk
 WORKDIR /go/src/github.com/ContainX/kirk

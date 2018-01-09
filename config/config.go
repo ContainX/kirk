@@ -56,18 +56,17 @@ func AddNewTeam(accessToken string) error {
 	collection := GetConfigCollection()
 	teamConfig := TeamConfig{}
 
-	err := collection.Find(bson.M{"team_id": teamInfo.ID}).One(&teamConfig)
-
-	if err != nil {
-		// Team does not exist
-		insertErr := collection.Insert(TeamConfig{
+	_, err = collection.Upsert(
+		bson.M{"team_id": teamInfo.ID},
+		TeamConfig{
 			Team_id:      teamInfo.ID,
 			Access_token: accessToken,
-		})
-		if insertErr != nil {
-			fmt.Println("Error creating team config", insertErr)
-			return errors.New("Error creating team config")
-		}
+		},
+	)
+
+	if err != nil {
+		fmt.Println("Error creating team config", err)
+		return errors.New("Error creating team config")
 	}
 
 	tracer.Get().Incr("teamAdded", []string{"team:" + teamInfo.ID}, 1)
