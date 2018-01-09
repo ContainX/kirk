@@ -14,6 +14,8 @@ func HandleCommand(commandText string, teamId string) string {
 		return configCommand(userCommand, teamId)
 	case "help":
 		return helpCommand()
+	case "version":
+		return versionCommand()
 	}
 
 	return unknownResponse
