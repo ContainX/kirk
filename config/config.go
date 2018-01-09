@@ -54,7 +54,6 @@ func AddNewTeam(accessToken string) error {
 	}
 
 	collection := GetConfigCollection()
-	teamConfig := TeamConfig{}
 
 	_, err := collection.Upsert(
 		bson.M{"team_id": teamInfo.ID},
