@@ -6,6 +6,8 @@ import (
 	"os"
 	"sync"
 
+	"github.com/DataDog/datadog-go/statsd"
+
 	"github.com/ContainX/kirk/config"
 	"github.com/ContainX/kirk/tracer"
 	"github.com/nlopes/slack"
@@ -32,21 +34,24 @@ func watchTeam(token string, startedWg *sync.WaitGroup) {
 	go rtm.ManageConnection()
 
 	// TODO: Could we save teamId in DB on install?  Then we don't have to call getTeamInfo on startup
-	teamInfo, teamInfoErr := api.GetTeamInfo()
-	teamId := teamInfo.ID
-	authTest, botUserErr := api.AuthTest()
-
-	if teamInfoErr != nil || botUserErr != nil {
-		fmt.Println(teamInfoErr, botUserErr)
-		panic("Initialization error")
-	} else {
-		fmt.Println("Listening to team", teamId)
+	teamInfo, err := api.GetTeamInfo()
+	if err != nil {
+		tracer.Get().Event(statsd.NewEvent("Watch Team: Error getting team info", err.Error()))
+		return
+	}
+	authTest, err := api.AuthTest()
+	if err != nil {
+		tracer.Get().Event(statsd.NewEvent("Watch Team: Auth test error", err.Error()))
+		return
 	}
 
-	botUserId := authTest.UserID
+	teamID := teamInfo.ID
+	fmt.Println("Listening to team", teamID)
+
+	botUserID := authTest.UserID
 
 	// Don't start a listener if we can't find the team's config
-	err, _ := config.GetTeamConfig(teamInfo.ID)
+	err, _ = config.GetTeamConfig(teamInfo.ID)
 	if err != nil {
 		fmt.Println(err)
 		startedWg.Done()
@@ -57,7 +62,7 @@ func watchTeam(token string, startedWg *sync.WaitGroup) {
 			//fmt.Printf("Event Received %+v\n", msg)
 
 			// Team is active if it is receiving events
-			tracer.Get().Incr("teams.active", []string{"team:" + teamId}, 1)
+			tracer.Get().Incr("teams.active", []string{"team:" + teamID}, 1)
 			switch event := msg.Data.(type) {
 			//TODO: Listen for token revoked event and invalidate in DB
 			//case *slack.ConnectedEvent:
@@ -66,7 +71,7 @@ func watchTeam(token string, startedWg *sync.WaitGroup) {
 			case *slack.ChannelJoinedEvent:
 				handleChannelJoin(*rtm, *event)
 			case *slack.MessageEvent:
-				handleMessage(event, *rtm, *teamInfo, botUserId)
+				handleMessage(event, *rtm, *teamInfo, botUserID)
 			}
 		}
 	}
