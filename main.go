@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/ContainX/kirk/config"
 	"github.com/ContainX/kirk/db"
 	"github.com/ContainX/kirk/slackTeam"
@@ -30,5 +31,6 @@ func main() {
 
 	// Start HTTP Server
 	router := getRouter()
+	fmt.Println("Starting HTTP Server")
 	router.Run(":8080")
 }
