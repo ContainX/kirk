@@ -42,6 +42,7 @@ func watchTeam(token string, startedWg *sync.WaitGroup) {
 	authTest, err := api.AuthTest()
 	if err != nil {
 		tracer.Get().Event(statsd.NewEvent("Watch Team: Auth test error", err.Error()))
+		startedWg.Done()
 		return
 	}
 
