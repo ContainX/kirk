@@ -37,6 +37,7 @@ func watchTeam(token string, startedWg *sync.WaitGroup) {
 	teamInfo, err := api.GetTeamInfo()
 	if err != nil {
 		tracer.Get().Event(statsd.NewEvent("Watch Team: Error getting team info", err.Error()))
+		startedWg.Done()
 		return
 	}
 	authTest, err := api.AuthTest()
